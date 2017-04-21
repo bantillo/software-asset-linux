@@ -40,6 +40,40 @@ fi
 echo "Logs are located here: /opt/cons3rt-agent/log"
 
 ################################
+# SOLR CLOUD 6.4.2
+################################
+
+cd /tmp
+wget http://archive.apache.org/dist/lucene/solr/6.4.2/solr-6.4.2.tgz
+tar -xvf solr-6.4.2.tgz solr-6.4.2/bin/install_solr_service.sh
+/tmp/solr-6.4.2/bin/install_solr_service.sh solr-6.4.2.tgz -u cons3rt -n
+
+cp ${ASSET_DIR}/media/* /opt/solr/server/solr-webapp/webapp/WEB-INF/lib
+chown cons3rt:cons3rt /var/solr -R
+chown cons3rt:cons3rt /opt/solr -R
+chown cons3rt:cons3rt /opt/solr-6.4.2 -R
+
+# retrieve the hostnames
+zk1=$(getProperty -r zk1 cons3rt.fap.deployment.machine.hostname)
+zk2=$(getProperty -r zk2 cons3rt.fap.deployment.machine.hostname)
+zk3=$(getProperty -r zk3 cons3rt.fap.deployment.machine.hostname)
+
+sc=$(getProperty cons3rt.fap.deployment.machine.hostname)
+
+
+# print out the hostnames
+echo "ZK1:"${zk1}
+echo "ZK2:"${zk2}
+echo "ZK3:"${zk3}
+echo "SC:"${sc}
+
+# append Zookeeper and Solr nodes
+cat <<EOF >> /opt/solr/bin/solr.in.sh
+ZK_HOST=${zk1},${zk2},${zk3}
+SOLR_HOST=${sc}
+EOF
+
+################################
 # EXIT CODES
 ################################
 
@@ -51,4 +85,3 @@ echo "Non-zero exit codes will tell CONS3RT to error out and notify you there wa
 
 echo "Exiting with code ${exitCode}"
 exit #{exitCode}
-
